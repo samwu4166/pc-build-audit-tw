@@ -99,39 +99,98 @@ PSU 80+ Gold 起跳；RTX 4070 Ti Super 以上必須 ATX 3.0 / 3.1（原生 12V-
 
 塔散 / AIO 散熱規格 TDP 必須 ≥ CPU 標稱 TDP。Intel K 後綴 / AMD X3D 建議 240mm AIO 以上。
 
-### Step 3 — Price 驗證 against 2026 TW market
+### Step 3 — Price 驗證 against 2026 TW spot market
 
-對每個 component，跑 Brave search：
+> ⚠️ **CRITICAL — Sam 2026-06-25 教訓**: 抓網路上的「Coolpc 商品介紹頁」(`coolpc.com.tw/tw/shop/...` 或 `coolpc.com.tw/tw/portfolio-items/...`) **常常是 2021-2023 的 marketing copy**,內含的「促銷價 $X,XXX」是當年活動價,**不是今日 spot price**。 直接信會慘 (我幹過,Sam 抓包)。
+
+#### 3a. Live shopping site 才有 spot price
+
+對每個 component,**先跑這 4 個 live 比價站**(它們會 scrape 多通路 + 顯示今日成交):
 
 ```
-"<part name> 2026 原價屋"
-"<part name> sinya 價格"
-"<part name> autobuy"
-site:ptt.cc PC_Shopping <part name>
-site:forum.gamer.com.tw PCDIY <part name>
+site:biggo.com.tw <part name>            # BigGo 多通路比價,有歷史曲線
+site:feebee.com.tw <part name>           # 飛比價格,蝦皮 / PChome / momo 集中
+site:24h.pchome.com.tw <part name>       # PChome 24h spot
+site:m.momoshop.com.tw <part name>       # momo spot
 ```
 
-並查巴哈姆特 PCDIY 看版近期討論串、PTT PC_Shopping「請益 / 菜單」近一個月推文中位數。
+**只有 BigGo / 飛比 / PChome / momo 的價可以當 spot price 引用**。 其他都當「baseline 估算」要明寫。
 
-**引用規範（hard rule）**：講「PCDIY / PTT 說 XXX」必須附**具體連結**或 PTT post ID，例如：
-- `https://forum.gamer.com.tw/C.php?bsn=60030&snA=<thread_id>`（巴哈 PCDIY 串）
-- PTT post ID 格式：`[菜單] 2026 AI dev 預算 5w` → `#1cXxXxXx (PC_Shopping)`，或 `ptt.cc/bbs/PC_Shopping/M.<timestamp>.A.XXX.html`
-- 沒辦法附 → 寫「[未驗證討論]」，不要假稱「PCDIY 實測」
+#### 3b. 通路抓 spot (sinya / coolpc / autobuy)
 
-#### 中位數計算（每個 component 都跑這張表）
+要看大型通路 spot,只信這幾個頁面:
 
-| 賣家報價 | sinya | coolpc | autobuy | 中位數 | 倍率 (報價/中位數) |
-|---|---|---|---|---|---|
-| $X,XXX | $X,XXX | $X,XXX | $X,XXX | $X,XXX | 1.XXx |
+```
+site:sinya.com.tw/prod/<id>              # 欣亞單品頁有當日價
+site:coolpc.com.tw/evaluate.php          # 原價屋線上估價單(只有這個頁面是 today)
+site:autobuy.tw/3c/prod_<id>             # autobuy 單品頁
+```
 
-- 倍率 > 1.25× → ⚠️ 偏高，建議替代
-- 倍率 > 1.5× → 🚨 嚴重虛標
-- 倍率 < 0.85× → 注意水貨 / 平輸 / 缺保固
-- 通路缺貨/查不到 → 標 N/A，至少 2 通路才算中位數有效
+**禁止當 spot 用**:
+- `coolpc.com.tw/tw/shop/dram/...` 或 `coolpc.com.tw/tw/portfolio-items/...` (商品介紹文,常含舊文案)
+- 商品 spec 介紹頁(沒「立即購買」按鈕的那種)
+- 任何 dateline 看不到的價格快照
 
-#### 🟡 CALLOUT（每份 audit 都必須寫進報告）
+#### 3c. 跨 spot vs baseline 嚴格分流
 
-> **2026 SSD / RAM HBM 紅利期 baseline**：因 HBM3e + AI 訓練卡需求佔走 NAND / DRAM 產能，2026 SSD / DDR5 售價相對 2023 **+30~50%**。1TB Gen4 NVMe ≈ $2,200-2,800、DDR5-6000 32GB kit ≈ $3,200-3,800 為合理區間；報價低於此區間反而要懷疑水貨/拆機。GPU 30 系列已停產，新案以 RTX 50 為主流，5060 Ti 16GB 是 budget LLM dev 甜蜜點。
+每個 component 都跑兩張表,**不能混**:
+
+**Spot 表** (引用 BigGo / 飛比 / PChome / momo / sinya 單品頁 / autobuy 單品頁 / coolpc 估價單):
+
+| 通路 | URL | 今日價 | 抓取日期 |
+|---|---|---|---|
+| PChome 24h | https://24h.pchome.com.tw/prod/... | $X,XXX | 2026-MM-DD |
+| momo | https://m.momoshop.com.tw/... | $X,XXX | 2026-MM-DD |
+| BigGo (多通路均) | https://biggo.com.tw/s/... | $X,XXX | 2026-MM-DD |
+
+**Baseline 估算表**(用 TrendForce / 報紙 / 4Gamers 報導當參考):
+
+| Source | 文章日期 | 推估區間 |
+|---|---|---|
+| TrendForce / DRAM Spot | YYYY-MM | $X,XXX-X,XXX |
+| 4Gamers / Cool3c 報導 | YYYY-MM | $X,XXX-X,XXX |
+
+最後**中位數只算 spot 表的**(min 2 個有效通路才算),baseline 只用來做「合理性 sanity check」。
+
+#### 3d. 倍率判定
+
+- 倍率 = 賣家報價 / spot 中位數
+- > 1.25× → ⚠️ 偏高
+- > 1.5× → 🚨 嚴重虛標
+- < 0.85× → 注意水貨 / 平輸 / 缺保固
+- spot 表 < 2 個通路 → 標 **「N/A — spot 不足以判定」**,不假裝有答案
+
+#### 3e. 大局 sanity check —— 2026 Q2-Q3 必須知道的市況
+
+**先跑 2 個查詢確認大局,再評個別零件**:
+
+```
+site:trendforce.com.tw <component>       # 大趨勢
+site:technews.tw <component> 漲價         # 新聞報導
+"<component> PTT 漲價" OR "PCDIY 漲價"     # 看版近一個月
+```
+
+**2026 Q2-Q3 已知事實 (Sam 2026-06-25 case 學到)** — 用 search 確認最新版本後寫進報告:
+
+- 🚨 **DDR5 32GB 32x2 飆破萬元** (金士頓 FURY Beast 32GB DDR5-5600 從 2025-10 NT$2,500 → 2026-04~06 NT$14,000,5x 漲幅)
+- 🚨 **DDR4 反而比 DDR5 便宜** (DDR4 32GB PChome 還有 $2,059-3,099),AMD 推 5800X3D 10 週年紀念版正是給「不想踩 DDR5 萬元」的人
+- 🚨 **SSD HBM 紅利仍在**: 1TB Gen4 NVMe ~$2,200-2,800,但 2TB+ Gen4 / Gen5 也跟著漲
+- ✅ **GPU**: 30 系列已停產,新案 RTX 50 主流。 5060 Ti 16GB budget LLM 甜蜜點,5070 Ti / 5080 主流 gaming
+- ⚠️ **大局短期沒緩解**: AI/HBM 排擠 DRAM 產能 + 原廠控產,2026 Q3-Q4 預期繼續漲
+
+**這些事實 ≠ 全部** — 每次 audit 還是要跑 trendforce / technews search 確認最新版本。 大局每 1-2 個月會更新。
+
+#### 3f. 引用規範 (hard rule)
+
+- 講「PCDIY / PTT 說 XXX」必須附**具體 thread URL**(或 PTT post ID):
+  - `https://forum.gamer.com.tw/C.php?bsn=60030&snA=<thread_id>` (巴哈 PCDIY 串)
+  - PTT: `ptt.cc/bbs/PC_Shopping/M.<timestamp>.A.XXX.html` 或 `#1cXxXxXx (PC_Shopping)` post ID
+- 講「通路價 $X」必須附**具體單品 URL** (見 3b 的禁止清單,Coolpc 商品介紹文不算)
+- 沒辦法附 → 寫「[未驗證 — 待 spot 查證]」,不要假稱「PCDIY 實測」或「Coolpc 標 $X」
+
+#### 🟡 CALLOUT (每份 audit 都必須寫進報告)
+
+> **2026 Q2-Q3 RAM HBM 紅利期 baseline**: 因 HBM3e + AI 訓練卡需求佔走 DRAM 產能,**DDR5 32GB 多數品牌已飆破萬元,DDR4 反而比 DDR5 便宜**(產線砍 → 供需局面意外 = DDR4 缺貨高位 PChome 仍有 $2-3k 區間)。 1TB Gen4 NVMe ~$2,200-2,800 合理,GPU 以 RTX 50 系列為主流。 **AMD 5800X3D 10 週年復刻版 2026-06-25 上市 (NT$11,790),AMD 自定義為「DDR5 漲價救命包」**。 ← 每次 audit 前先 search 確認此 callout 是否需要更新 (大局每 1-2 個月會動)。
 
 ### Step 4 — Use-case fit
 
@@ -168,7 +227,11 @@ Spec mismatch → 直接 upgrade 對應零件（e.g., 「AI dev」但 GPU 5060 T
 ## 4. Hard rules（不可違反）
 
 1. **CPU-MB 不相容 = BLOCKER**，先講再說後面。Sam 真實案例 2026-06-19 R5 7500F（AM5）+ B760M（LGA1700）。
-2. **必查 2026 真實行情**，不准用過時 reference 價格（2026-06-19 教訓：被 Sam 親口糾正過）。SSD / RAM 2026 比 2023 漲 30-50% 是 baseline 認知。
+2. **必查 2026 TODAY spot price,不准用過時 reference 價格**:
+   - **2026-06-19 教訓**: 被 Sam 親口糾正過 (SSD/RAM HBM 漲價 baseline)
+   - **2026-06-25 教訓**: 我抓了 Coolpc 商品介紹頁的 2021-2023 marketing copy 當 spot price,推薦給 Sam 結果完全錯方向。 **禁止信 `coolpc.com.tw/tw/shop/...` 或 `/portfolio-items/...` 介紹文價格** (見 Step 3a-3b)
+   - **每次** audit 都要 trendforce / technews 跑大局 query (DDR5 萬元化 / DDR4 反便宜 / GPU stop 等)
+   - 內部 baseline 認知過期 1-2 個月就會錯
 3. **use case 不確定先問**。假設錯會推 8GB VRAM 給 LLM dev 就慘。
 4. **推薦永遠帶「為何」**，不單列 spec —Sam 要看 reasoning 才能 push back。
 5. **buffer 留 budget 5-10%** for 上門組裝（原價屋 $800-1500）、散熱膏、機殼風扇、滑鼠、Wi-Fi 天線、雜項。
@@ -241,7 +304,9 @@ Spec mismatch → 直接 upgrade 對應零件（e.g., 「AI dev」但 GPU 5060 T
 - [ ] PSU watt ≥ CPU TDP + GPU TDP + 30%
 - [ ] Case form factor 容得下 MB + GPU 長度
 - [ ] Cooler TDP ≥ CPU TDP
-- [ ] 每個 component 跑過 Brave 行情驗價（原價屋 / 欣亞 / autobuy）
+- [ ] 每個 component 跑過 spot 驗價:**BigGo + 飛比 + PChome + momo** 4 站,不只看 Coolpc/sinya/autobuy
+- [ ] **沒抓 Coolpc 商品介紹頁 (`/shop/` 或 `/portfolio-items/`) 當 spot price** — 那些是 2021-2023 marketing copy
+- [ ] 跑過 trendforce / technews 確認 2026 大局 (DDR5 漲價 / DDR4 反便宜 / GPU 等)
 - [ ] 巴哈 PCDIY / PTT PC_Shopping 查過近期討論
 - [ ] Use case 確認過或主動問
 - [ ] Buffer 留 5-10%
